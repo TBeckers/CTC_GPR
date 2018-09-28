@@ -162,20 +162,20 @@ hyp4.Ky=hyp4.K*training_output2;
 
 hyp5.lik=hyp2.lik;
 hyp5.sd=sqrt(exp(2*hyp2.cov(end)));
-hyp5.ell=hyp2.ell(2*n+1:end);
-hyp5.K=inv(kernel_se(training_input(:,2*n+1:end)',training_input(:,2*n+1:end)', hyp5.sd,hyp5.ell)+eye(length(training_input(:,2*n+1:end)))*exp(2*hyp5.lik));
+hyp5.ell=hyp2.ell(2*n+1);
+hyp5.K=inv(kernel_se(training_input(:,2*n+1)',training_input(:,2*n+1)', hyp5.sd,hyp5.ell)+eye(length(training_input(:,2*n+1)))*exp(2*hyp5.lik));
 hyp5.Ky=hyp5.K*training_output1;
 
 hyp6.lik=hyp2.lik;
 hyp6.sd=sqrt(exp(2*hyp2.cov(end)));
-hyp6.ell=hyp2.ell(2*n+1:end);
-hyp6.K=inv(kernel_se(training_input(:,2*n+1:end)',training_input(:,2*n+1:end)', hyp6.sd,hyp6.ell)+eye(length(training_input(:,2*n+1:end)))*exp(2*hyp6.lik));
+hyp6.ell=hyp2.ell(end);
+hyp6.K=inv(kernel_se(training_input(:,end)',training_input(:,end)', hyp6.sd,hyp6.ell)+eye(length(training_input(:,end)))*exp(2*hyp6.lik));
 hyp6.Ky=hyp6.K*training_output2;
 
 disp('...done');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Control with GP
-Kpf=@(q) Kp+400*([predict_mod(3,hyp5,training_input(:,2*n+1:end)',q),0;0,predict_mod(3,hyp6,training_input(:,2*n+1:end)',q)])-diag([3,3]);
+Kpf=@(q) Kp+400*([predict_mod(3,hyp5,training_input(:,2*n+1)',q(1)),0;0,predict_mod(3,hyp6,training_input(:,end)',q(2))])-diag([3,3]);
 Kdf=@(dq,q) Kd+400*([predict_mod(3,hyp3,training_input(:,n+1:end)',[dq;q]),0;0,predict_mod(3,hyp4,training_input(:,n+1:end)',[dq;q])])-diag([4,4]);
 u_gp_mean=@(t,ddq,dq,q) hatH(q)*ddqd(t)+hatC(dq,q)*dqd(t)+hatG(q)+f(2,t,q,dq,ddq)'-Kpf(q)*(q-qd(t))-Kdf(dq,q)*(dq-dqd(t));
 
