@@ -23,7 +23,7 @@ g=10;
 
 alpha=m1*(l1/2)^2+m2*(l1^2+(l2/2)^2);
 beta=m2*l1*l2/2;
-delta=m2*l2/2;
+delta=m2*(l2/2)^2;
 H=@(q) [alpha+2*beta*cos(q(2)), delta+beta*cos(q(2));delta+beta*cos(q(2)), delta];
 C=@(dq,q) [-beta*sin(q(2))*dq(2), -beta*sin(q(2))*(dq(1)+dq(2)); beta*sin(q(2))*dq(1), 0];
 G=@(q) [(m1+m2)*g*l1/2*sin(q(1))+m2*g*l2/2*sin(q(1)+q(2)); m2*g*l2/2*sin(q(1)+q(2))];
@@ -37,7 +37,7 @@ gh=10;
 
 alpha=m1h*(l1h/2)^2+m2h*(l1h^2+(l2h/2)^2);
 beta=m2h*l1h*l2h/2;
-delta=m2h*l2h/2;
+delta=m2h*(l2h/2)^2;
 
 hatH=@(q) [alpha+2*beta*cos(q(2)), delta+beta*cos(q(2));delta+beta*cos(q(2)), delta];
 hatC=@(dq,q) [-beta*sin(q(2))*dq(2), -beta*sin(q(2))*(dq(1)+dq(2)); beta*sin(q(2))*dq(1), 0];
@@ -56,6 +56,8 @@ Kd= 10*eye(2);
 
 u=@(t,ddq,dq,q) hatH(q)*ddqd(t)+hatC(dq,q)*dqd(t)+hatG(q)-Kp*(q-qd(t))-Kd*(dq-dqd(t));
 
+opts = odeset('AbsTol',1e-3);
+
 %u=@(t,dq,q) [0;0];
 %% Simulation with classical CTC
 tspan=[0:0.05:20];
@@ -66,7 +68,7 @@ ddq0=[0;0];
 
 xp0=[dq0;ddq0];
 x0=[q0;dq0];
-[t,x_ct] = ode15i(@(t,x,xp) sde_robot(t,x,xp,n,u,H,C,G,F), tspan,x0,xp0);
+[t,x_ct] = ode15i(@(t,x,xp) sde_robot(t,x,xp,n,u,H,C,G,F), tspan,x0,xp0,opts);
 
 qd_vec=qd(t')';
 dqd_vec=dqd(t')';
@@ -74,13 +76,23 @@ dqd_vec=dqd(t')';
 %% Plot
 figure(1);
 clf
+title('Control with classical CTC');
+subplot(2,1,1)
 plot(t,qd_vec(:,1),'--',t,dqd_vec(:,1),'--');
 hold on
 plot(t,x_ct(:,[1 3]));
 legend('qd1','dqd1','q1','dq1');
-title('Control with classical CTC');
 xlabel('time');
 ylabel('States');
+
+subplot(2,1,2)
+plot(t,qd_vec(:,2),'--',t,dqd_vec(:,2),'--');
+hold on
+plot(t,x_ct(:,[2 4]));
+legend('qd2','dqd2','q2','dq2');
+xlabel('time');
+ylabel('States');
+
 drawnow();
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -183,20 +195,30 @@ u_gp_mean=@(t,ddq,dq,q) hatH(q)*ddqd(t)+hatC(dq,q)*dqd(t)+hatG(q)+f(2,t,q,dq,ddq
 
 disp('Starting simulation');
 
-[t,x] = ode15i(@(t,x,xp) sde_robot(t,x,xp,n,u_gp_mean,H,C,G,F), tspan,x0,xp0);
+[t,x] = ode15i(@(t,x,xp) sde_robot(t,x,xp,n,u_gp_mean,H,C,G,F), tspan,x0,xp0,opts);
 
 disp('...done');
 %% Plot
 
 figure(3);
 clf
+title('Control with CTC-GPR')
+subplot(2,1,1)
 plot(t,qd_vec(:,1),'--',t,dqd_vec(:,1),'--');
 hold on
 plot(t,x(:,[1 3]));
 legend('dq1','dqd1','q1','qd1');
-title('Control with CTC-GPR')
 xlabel('time');
 ylabel('States');
+
+subplot(2,1,2)
+plot(t,qd_vec(:,2),'--',t,dqd_vec(:,2),'--');
+hold on
+plot(t,x(:,[2 4]));
+legend('dq2','dqd2','q2','qd2');
+xlabel('time');
+ylabel('States');
+
 drawnow();
 
 
@@ -260,7 +282,7 @@ u_gp_mean_const=@(t,ddq,dq,q) hatH(q)*ddqd(t)+hatC(dq,q)*dqd(t)+hatG(q)+f(2,t,q,
 
 disp('Starting simulation');
 
-[t,x_ctc] = ode15i(@(t,x,xp) sde_robot(t,x,xp,n,u_gp_mean_const,H,C,G,F), tspan,x0,xp0);
+[t,x_ctc] = ode15i(@(t,x,xp) sde_robot(t,x,xp,n,u_gp_mean_const,H,C,G,F), tspan,x0,xp0,opts);
     
 disp('...done');
 
